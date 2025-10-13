@@ -1,16 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>LOST FREQUENCY</title>
-	<meta name="description" content="A cooperative cryptography-based signal decoding experience">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOST FREQUENCY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Hegarty&display=swap" rel="stylesheet">
+  <meta name="description" content="A cooperative cryptography-based signal decoding experience">
   <link href="/src/style.css" rel="stylesheet">
 </head>
-<body class="">
-	<div id="app">
-		Welcome to the homepage! Your unique fingerprint is <p id="fingerprint">fingerprint</p>
-	</div>
+<body>
+  <div class="flex flex-col items-center" id="app">
+    <p class="text-2xl mt-4">
+      Hi, Welcome to Lost Freqency!
+    </p>
+
+    <p class="text-xl text-center mt-4 max-w-3/5">
+      Because I create a fingerprint based on your GPU using webgl,
+      you must read these <a class="text-[#FA8072]" href="/terms.html">terms of service</a>
+      so that in the rare case I get reported I don't get slapped on the 
+      wrist by kier starmer.
+    </p>
+
+    <p class="text-xl text-center mt-4 max-w-3/5">
+      If you don't mind that I create a tiny little hash to
+      check if you are unique or not then click
+    </p>
+
+    <a class="mt-4 text-4xl text-blue-500" href="/main">HERE</a>
+
+    <p class="mt-4 text-[8px]">To continue</p>
+
+    <img src="/assets/sadge.png" alt="">
+  </div>
 </body>
-<script type="module" src="/src/main.ts"></script>
 </html>
