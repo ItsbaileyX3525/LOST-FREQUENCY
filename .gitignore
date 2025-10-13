@@ -1,0 +1,13 @@
+node_modules/
+dist/
+public/
+.env
+*.log
+.DS_Store
+overview.md
+node_modules/
+dist/
+public/
+.env
+*.log
+.DS_Store
