@@ -9,6 +9,28 @@ import Database from 'better-sqlite3';
 
 dotenv.config();
 
+const SCHEMA_FILE = path.join(__dirname, '..', 'schema.sql');
+const DB_FILE = process.env.DB_FILE || path.join(__dirname, '..', 'app.db');
+
+function ensureDatabase() { //Need this becuz i work on it at college and home, kinda annoying but we chillin
+	const dbExists = fs.existsSync(DB_FILE);
+	const db = new Database(DB_FILE);
+
+	if (!dbExists) {
+		if (fs.existsSync(SCHEMA_FILE)) {
+			const schema = fs.readFileSync(SCHEMA_FILE, 'utf8');
+			db.exec(schema);
+			console.log('Database created');
+		} else {
+			console.log("Where schema?")
+		}
+	}
+
+	return db;
+}
+
+const db = ensureDatabase();
+
 //console.log(process.env.TEST); //Works
 
 const app = express();
