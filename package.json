@@ -26,11 +26,17 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
+    "@types/base64url": "^2.0.3",
+    "base64url": "^3.0.1",
+    "better-sqlite3": "^12.4.1",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "tailwindcss": "^4.1.14",
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.7.2",
     "@types/ws": "^8.18.1",
