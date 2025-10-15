@@ -1,13 +1,10 @@
 node_modules/
 dist/
-public/
+/public/
 .env
 *.log
 .DS_Store
 overview.md
-node_modules/
-dist/
-public/
-.env
-*.log
-.DS_Store
+thine_database.db
+thine_database.db-shm
+thine_database.db-wal

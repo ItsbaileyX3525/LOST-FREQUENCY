@@ -6,39 +6,31 @@ import path from "path";
 import dotenv from "dotenv";
 import base64url from 'base64url';
 import Database from 'better-sqlite3';
+import cors from 'cors';
 
 dotenv.config();
 
-const SCHEMA_FILE = path.join(__dirname, '..', 'schema.sql');
-const DB_FILE = process.env.DB_FILE || path.join(__dirname, '..', 'app.db');
+const db = new Database('thine_database.db');
+db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently makes performance better?
 
-function ensureDatabase() { //Need this becuz i work on it at college and home, kinda annoying but we chillin
-	const dbExists = fs.existsSync(DB_FILE);
-	const db = new Database(DB_FILE);
+//Make database creation simpler
 
-	if (!dbExists) {
-		if (fs.existsSync(SCHEMA_FILE)) {
-			const schema = fs.readFileSync(SCHEMA_FILE, 'utf8');
-			db.exec(schema);
-			console.log('Database created');
-		} else {
-			console.log("Where schema?")
-		}
-	}
-
-	return db;
-}
-
-const db = ensureDatabase();
+//const schemaPath = "./schema.sql";
+//const sql = fs.readFileSync(schemaPath, 'utf8');
+//db.exec(sql);
+//console.log("Database created!");
 
 //console.log(process.env.TEST); //Works
 
 const app = express();
+//app.use(cors({ origin: 'http://localhost:5173' })); //Test cors
+app.use(cors()) //Test cors but more domains or something
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const publicPath = path.join(__dirname, "../public");
 
+//Mostly vibecoded ngl (as if I know what any of this does)
 function generateFernetKey() {
     const key = crypto.randomBytes(32);
     return base64url.encode(key);
@@ -67,6 +59,8 @@ function decryptFernet(token: string, base64Key: string): string {
 	const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 	return decrypted.toString('utf8');
 }
+//End of vibecode
+
 
 //const key = generateFernetKey();
 //const token = encryptFernet('Im not telling you the message LOL', key);
@@ -80,7 +74,7 @@ function decryptFernet(token: string, base64Key: string): string {
 const key = process.env.FERNET_KEY
 const finalToken = process.env.FERNET_TOKEN;
 const token_parts = JSON.parse(process.env.TOKEN_PARTS || '[]');
-const token_parts_encoded = JSON.parse(process.env.TOKEN_PARTS_ENCODED || '[]');
+const token_parts_encoded: Record<string, string[]> = JSON.parse(process.env.TOKEN_PARTS_ENCODED || '{}');
 
 //console.log(token_parts)
 //console.log(token_parts_encoded)
@@ -88,11 +82,41 @@ const token_parts_encoded = JSON.parse(process.env.TOKEN_PARTS_ENCODED || '[]');
 app.use(express.static(publicPath));
 
 app.post("/api/hash", (req, res) => { //Get users fingerprint, return random hash from main string
-	const { userHash } = req.body;
+	const { hash } = req.body;
 
-    
+    let randomHash: string | null = null
 
-	res.json({ success: true });
+    console.log("Recieved hash: " + hash)
+
+    //Check if fingerprint has a hash already
+    const row = db.prepare("SELECT allocatedHash FROM user_hashes WHERE fingerprint = ?").get(hash) as { allocatedHash: string } | undefined;
+    //^ Right, im fed up with typescript... Type saftey thoooooooo
+    console.log("From database: ", row)
+    if (row) {
+        console.log(row?.allocatedHash)
+        randomHash = row?.allocatedHash;
+    }
+
+    if (randomHash === null) {
+        console.log("Assigning new hash")
+        const values: string[] = []
+        for (const [key, value] of Object.entries(token_parts_encoded)) {
+            if(!value) return false
+            values.push((value as string[])[0])
+        }
+
+        randomHash = values[Math.floor(Math.random() * values.length)]
+        console.log("random hash assigned:", randomHash)
+
+        const stmt = db.prepare("INSERT INTO user_hashes (fingerprint, allocatedHash) VALUES (?,?)").run(hash, randomHash)
+
+    }
+
+    if (randomHash === null) {
+        console.log("tf happened");
+    }
+
+	res.json({ success: true, hash: randomHash });
 });
 
 app.post("/api/submitDecrypted", (req, res) => { //Check if their decrpyted hash from main is right

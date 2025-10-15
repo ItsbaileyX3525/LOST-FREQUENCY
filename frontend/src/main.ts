@@ -1,10 +1,11 @@
 //Server stuff
-const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-const ws = new WebSocket(`${protocol}//${window.location.hostname}:${window.location.port || 3001}`);
+//const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+//const ws = new WebSocket(`${protocol}//${window.location.hostname}:${window.location.port || 3001}`);
 
 //Client stuff
 const fingerprintText = document.getElementById("fingerprint") as HTMLParagraphElement;
 
+/*
 ws.onopen = () => {
     ws.send(JSON.stringify({ type: "init", timestamp: Date.now() }));
 };
@@ -18,6 +19,7 @@ ws.onerror = (error) => {
 ws.onclose = () => {
 
 };
+*/
 
 async function sha256Hex(message: string) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -113,8 +115,50 @@ async function requestFingerprint(consent: boolean) {
     //Other stuff if I need it
 }
 
+async function uploadFingerprint(hash: string) {
+
+    let returnHash = localStorage.getItem("myHash") || undefined;
+
+    if (!returnHash) {
+        const response = await fetch('http://localhost:3001/api/hash', {
+            method: "POST",
+            headers: {
+                "Content-Type" : "application/json",
+            },
+            body: JSON.stringify({
+                hash: hash,
+            })
+        });
+
+        if (!response.ok) {
+            console.log("Server error prolly");
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success !== "true") {
+            console.log("Something went wrong.");
+        }
+
+        returnHash = data.hash;
+
+    }
+
+    if (!returnHash) {
+        console.log("error")
+        return "";
+    }
+
+    localStorage.setItem("myHash", returnHash)
+    
+    return returnHash;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     const fingerprint = await requestFingerprint(true)
     if (!fingerprint) return;
     fingerprintText.innerText = fingerprint;
+    const myHash = await uploadFingerprint(fingerprint)
+    console.log(myHash)
 })
