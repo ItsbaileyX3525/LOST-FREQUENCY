@@ -81,6 +81,30 @@ const token_parts_encoded: Record<string, string[]> = JSON.parse(process.env.TOK
 
 app.use(express.static(publicPath));
 
+app.post("/api/checkDecoded", (_req, res) => { //Cudda just made it get but oh well
+    console.log("Called")
+    const hashes = [
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "********************",
+        "*********************"
+    ];
+    const row = db.prepare("SELECT * FROM hashes WHERE completedHash = ?").all('true') as { id: number, hash: string }[];
+    if (row && row.length > 0) {
+        for (let e in row) {
+            hashes[row[e].id - 1] = row[e].hash
+        }
+    }
+    console.log("completed hash: " + hashes)
+    res.json({ success: true, hashThusFar: hashes })
+})
+
 app.post("/api/hash", (req, res) => { //Get users fingerprint, return random hash from main string
 	const { hash } = req.body;
 
@@ -108,12 +132,13 @@ app.post("/api/hash", (req, res) => { //Get users fingerprint, return random has
         randomHash = values[Math.floor(Math.random() * values.length)]
         console.log("random hash assigned:", randomHash)
 
-        const stmt = db.prepare("INSERT INTO user_hashes (fingerprint, allocatedHash) VALUES (?,?)").run(hash, randomHash)
+        db.prepare("INSERT INTO user_hashes (fingerprint, allocatedHash) VALUES (?,?)").run(hash, randomHash)
 
     }
 
     if (randomHash === null) {
         console.log("tf happened");
+        res.json({ success: false, hash: randomHash });
     }
 
 	res.json({ success: true, hash: randomHash });

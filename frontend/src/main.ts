@@ -4,6 +4,9 @@
 
 //Client stuff
 const fingerprintText = document.getElementById("fingerprint") as HTMLParagraphElement;
+const hashDecode = document.getElementById("hash") as HTMLParagraphElement;
+const hasDecoded = document.getElementById("hasHashDecoded") as HTMLParagraphElement;
+const serverHash = document.getElementById("fullHash") as HTMLParagraphElement;
 
 /*
 ws.onopen = () => {
@@ -29,7 +32,7 @@ async function sha256Hex(message: string) {
 }
 
 //Complicated stuff here, docs reign supreme
-
+//Vibin~
 function getCanvasFingerprint() {
     const canvas = document.createElement("canvas");
     canvas.width = 300;
@@ -111,14 +114,25 @@ async function requestFingerprint(consent: boolean) {
     const clientHash = await sha256Hex(fingerprintString);
 
     return clientHash
+}
 
-    //Other stuff if I need it
+async function checkHashThusFar() {
+    const response = await fetch('http://localhost:3001/api/checkDecoded', {
+        method: "POST"
+    });
+
+    if (!response.ok) {
+        console.log("error");
+        return;
+    }
+
+    const data = await response.json();
+
+    return data
 }
 
 async function uploadFingerprint(hash: string) {
-
     let returnHash = localStorage.getItem("myHash") || undefined;
-
     if (!returnHash) {
         const response = await fetch('http://localhost:3001/api/hash', {
             method: "POST",
@@ -134,31 +148,30 @@ async function uploadFingerprint(hash: string) {
             console.log("Server error prolly");
             return;
         }
-
         const data = await response.json();
-
         if (data.success !== "true") {
             console.log("Something went wrong.");
         }
-
         returnHash = data.hash;
-
     }
-
     if (!returnHash) {
         console.log("error")
         return "";
     }
-
     localStorage.setItem("myHash", returnHash)
-    
     return returnHash;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
     const fingerprint = await requestFingerprint(true)
-    if (!fingerprint) return;
-    fingerprintText.innerText = fingerprint;
+    if (!fingerprint || !hasDecoded || !hashDecode || !serverHash) return;
     const myHash = await uploadFingerprint(fingerprint)
-    console.log(myHash)
+    const hashThusFar = await checkHashThusFar()
+    const haveIDecoed = false;
+    if (myHash === undefined || hashThusFar === undefined || haveIDecoed === undefined) return false
+    fingerprintText.innerText = fingerprint;
+    hashDecode.innerText = myHash;
+    serverHash.innerText = hashThusFar.hashThusFar.toString().replaceAll(",", "")
+    hasDecoded.innerText = haveIDecoed ? "yes" : "no";
+
 })

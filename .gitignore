@@ -8,3 +8,4 @@ overview.md
 thine_database.db
 thine_database.db-shm
 thine_database.db-wal
+schema_with_data.sql
