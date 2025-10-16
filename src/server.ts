@@ -7,7 +7,7 @@ import base64url from 'base64url';
 import Database from 'better-sqlite3';
 import cors from 'cors';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const db = new Database('thine_database.db');
 db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently makes performance better?

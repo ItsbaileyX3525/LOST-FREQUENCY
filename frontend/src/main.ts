@@ -2,6 +2,9 @@ const fingerprintText = document.getElementById("fingerprint") as HTMLParagraphE
 const hashDecode = document.getElementById("hash") as HTMLParagraphElement;
 const hasDecoded = document.getElementById("hasHashDecoded") as HTMLParagraphElement;
 const serverHash = document.getElementById("fullHash") as HTMLParagraphElement;
+const hashHintEl = document.getElementById("hint") as HTMLParagraphElement;
+const muteButton = document.getElementById("checkboxInput") as HTMLInputElement;
+const audio = new Audio("/assets/lofi.mp3");
 
 const form = document.getElementById("le-form") as HTMLFormElement;
 
@@ -24,7 +27,7 @@ function getCanvasFingerprint() {
     canvas.height = 80;
     const ctx = canvas.getContext("2d");
 
-    if (!ctx) return; //Idk why typescript thinks ctx could be null but oh well 
+    if (!ctx) return; //Idk why typescript thinks ctx could be null but oh well
 
     ctx.fillStyle = "#f7f7f7";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -139,7 +142,6 @@ async function uploadFingerprint(hash: string) {
     }
     returnHash = data.hash;
     completed_hash = data.completed_hash
-    console.log(completed_hash)
     return [returnHash, completed_hash];
 }
 
@@ -184,10 +186,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     const uploadResult = await uploadFingerprint(fingerprint)
     if (!uploadResult || hashThusFar === undefined) return
     myHash = uploadResult[0]
+    const myHashSplit: string[] = myHash?.split(" ") || []
     haveIDecoed = uploadResult[1]
     fingerprintText.innerText = fingerprint;
-    hashDecode.innerText = myHash || "";
+    hashDecode.innerText = myHashSplit[0] || "";
+    hashHintEl.innerText = myHashSplit.slice(2, myHashSplit.length).join(" ")
     serverHash.innerText = hashThusFar.hashThusFar.toString().replaceAll(",", "")
     hasDecoded.innerText = haveIDecoed ? "yes" : "no";
+})
 
+muteButton.addEventListener("click", (e) => {
+    const musicMuted =  muteButton.checked
+    if (musicMuted) {
+        localStorage.setItem("musicMuted", "true");
+        audio.pause()
+    } else {
+        localStorage.setItem("musicMuted", "false");
+        audio.play()
+    }
+})
+
+document.addEventListener("click", () => {
+    if (audio.paused && localStorage.getItem("musicMuted") === "false") {
+        audio.play()
+        muteButton.click()
+    }
 })
