@@ -14,7 +14,7 @@ db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently 
 
 //Make database creation simpler
 
-if (false) {
+if (true) {
     const schemaPath = "./schema_with_data.sql";
     const sql = fs.readFileSync(schemaPath, 'utf8');
     db.exec(sql);
@@ -162,11 +162,33 @@ app.post("/api/submitDecrypted", (req, res) => { //Check if their decrpyted hash
 
     //ngl spent like 20 mins on this nomralize thing for chazza to fix in a second
     const normalizedDecrypt = (decrypt || '').replace(/\s+/g, '').toString();
-    const row = db.prepare("SELECT hash, related_encoded FROM hashes WHERE REPLACE(hash, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE").get(normalizedDecrypt) as { hash: string, related_encoded: string } | undefined;
+    const row = db.prepare(`
+        SELECT hash, related_encoded
+        FROM hashes
+        WHERE REPLACE(hash, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE
+
+        UNION
+
+        SELECT hash, related_encoded
+        FROM hashes
+        WHERE REPLACE(shortened, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE
+        AND NOT EXISTS (
+            SELECT 1 FROM hashes
+            WHERE REPLACE(hash, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE
+        )
+        LIMIT 1
+    `).get(normalizedDecrypt, normalizedDecrypt, normalizedDecrypt) as { hash: string, related_encoded: string } | undefined;
+    
     if (!row) { //Checks if the deciphered hash exists therefore real
         res.json({ success: false, message: "hash non_existant" });
         return
     }
+    
+    if (row && 'hash' in row) {
+        console.log(row.hash)
+    }
+    
+    
     if (row.related_encoded !== myHash) {
         res.json({ success: false, message: "hashes don't match" })
         return

@@ -2,6 +2,7 @@ node_modules/
 dist/
 /public/
 .env
+.old.env
 *.log
 .DS_Store
 overview.md

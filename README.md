@@ -12,7 +12,7 @@ Just in case you are curious this server uses:
 
 - NodeJS + ws + express
 - Vite + Typescript
-- tailwindcss
+- tailwindcss and raw css at this point
 
 I think this is going to be the coolest project that I have ever made in my coding existance!
 
