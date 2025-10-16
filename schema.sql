@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS user_hashes (
 CREATE TABLE IF NOT EXISTS hashes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     hash TEXT NOT NULL UNIQUE,
-    completedHash TEXT NOT NULL
+    completedHash TEXT NOT NULL,
+    related_encoded TEXT
 );
 
 -- Table for storing encoded hashes with their encoding type

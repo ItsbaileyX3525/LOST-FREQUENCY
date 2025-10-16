@@ -1,28 +1,13 @@
-//Server stuff
-//const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-//const ws = new WebSocket(`${protocol}//${window.location.hostname}:${window.location.port || 3001}`);
-
-//Client stuff
 const fingerprintText = document.getElementById("fingerprint") as HTMLParagraphElement;
 const hashDecode = document.getElementById("hash") as HTMLParagraphElement;
 const hasDecoded = document.getElementById("hasHashDecoded") as HTMLParagraphElement;
 const serverHash = document.getElementById("fullHash") as HTMLParagraphElement;
 
-/*
-ws.onopen = () => {
-    ws.send(JSON.stringify({ type: "init", timestamp: Date.now() }));
-};
+const form = document.getElementById("le-form") as HTMLFormElement;
 
-ws.onmessage = (event) => {
-};
-
-ws.onerror = (error) => {
-};
-
-ws.onclose = () => {
-
-};
-*/
+let part: string | undefined = undefined
+let myHash: string | undefined = undefined
+let fingerprint: string | undefined = undefined
 
 async function sha256Hex(message: string) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -132,45 +117,72 @@ async function checkHashThusFar() {
 }
 
 async function uploadFingerprint(hash: string) {
-    let returnHash = localStorage.getItem("myHash") || undefined;
-    if (!returnHash) {
-        const response = await fetch('http://localhost:3001/api/hash', {
-            method: "POST",
-            headers: {
-                "Content-Type" : "application/json",
-            },
-            body: JSON.stringify({
-                hash: hash,
-            })
-        });
+    let returnHash = undefined;
+    let completed_hash = undefined
+    const response = await fetch('http://localhost:3001/api/hash', {
+        method: "POST",
+        headers: {
+            "Content-Type" : "application/json",
+        },
+        body: JSON.stringify({
+            hash: hash,
+        })
+    });
 
-        if (!response.ok) {
-            console.log("Server error prolly");
-            return;
-        }
-        const data = await response.json();
-        if (data.success !== "true") {
-            console.log("Something went wrong.");
-        }
-        returnHash = data.hash;
+    if (!response.ok) {
+        console.log("Server error prolly");
+        return;
     }
-    if (!returnHash) {
-        console.log("error")
-        return "";
+    const data = await response.json();
+    if (data.success !== true) {
+        console.log("Something went wrong.");
     }
-    localStorage.setItem("myHash", returnHash)
-    return returnHash;
+    returnHash = data.hash;
+    completed_hash = data.completed_hash
+    console.log(completed_hash)
+    return [returnHash, completed_hash];
 }
 
+form.addEventListener("submit", async (e) => {
+    e.preventDefault()
+
+    let formData = new FormData(form);
+
+    const response = await fetch('http://localhost:3001/api/submitDecrypted', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            decrypt: formData.get("hashArea"),
+            myHash: myHash,
+            fingerprint: fingerprint
+        })
+    })
+
+    form.reset()
+
+    if (!response.ok) {
+        console.log("error with form submit");
+        return;
+    }
+
+    const data = await response.json();
+
+    console.log(data);
+})
+
 document.addEventListener("DOMContentLoaded", async () => {
-    const fingerprint = await requestFingerprint(true)
+    fingerprint = await requestFingerprint(true)
     if (!fingerprint || !hasDecoded || !hashDecode || !serverHash) return;
-    const myHash = await uploadFingerprint(fingerprint)
     const hashThusFar = await checkHashThusFar()
-    const haveIDecoed = false;
-    if (myHash === undefined || hashThusFar === undefined || haveIDecoed === undefined) return false
+    let haveIDecoed = false;
+    const uploadResult = await uploadFingerprint(fingerprint)
+    if (!uploadResult || hashThusFar === undefined) return
+    myHash = uploadResult[0]
+    haveIDecoed = uploadResult[1]
     fingerprintText.innerText = fingerprint;
-    hashDecode.innerText = myHash;
+    hashDecode.innerText = myHash || "";
     serverHash.innerText = hashThusFar.hashThusFar.toString().replaceAll(",", "")
     hasDecoded.innerText = haveIDecoed ? "yes" : "no";
 

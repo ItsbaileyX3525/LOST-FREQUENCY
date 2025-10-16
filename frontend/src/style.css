@@ -15,3 +15,41 @@ body {
 p {
     word-break: break-all;
 }
+
+.decoded-input {
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 2px solid #ffd166;
+    background: #1a1a1a;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    outline: none;
+    transition: transform 80ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+.decoded-input::placeholder {
+    color: #999;
+}
+.decoded-input:focus {
+    transform: translateY(-1px);
+}
+
+.decoded-button {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: 2px solid #ffd166;
+    color: #999;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 100ms ease, box-shadow 160ms ease, opacity 120ms ease;
+}
+.decoded-button:hover {
+    transform: translateY(-2px);
+    opacity: 0.98;
+}
+.decoded-button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}

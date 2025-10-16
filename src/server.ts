@@ -1,5 +1,4 @@
 import express from "express";
-import { WebSocketServer, WebSocket} from "ws";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -15,10 +14,10 @@ db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently 
 
 //Make database creation simpler
 
-//const schemaPath = "./schema.sql";
-//const sql = fs.readFileSync(schemaPath, 'utf8');
-//db.exec(sql);
-//console.log("Database created!");
+const schemaPath = "./schema_with_data.sql";
+const sql = fs.readFileSync(schemaPath, 'utf8');
+db.exec(sql);
+console.log("Database created!");
 
 //console.log(process.env.TEST); //Works
 
@@ -82,7 +81,6 @@ const token_parts_encoded: Record<string, string[]> = JSON.parse(process.env.TOK
 app.use(express.static(publicPath));
 
 app.post("/api/checkDecoded", (_req, res) => { //Cudda just made it get but oh well
-    console.log("Called")
     const hashes = [
         "********************",
         "********************",
@@ -101,7 +99,6 @@ app.post("/api/checkDecoded", (_req, res) => { //Cudda just made it get but oh w
             hashes[row[e].id - 1] = row[e].hash
         }
     }
-    console.log("completed hash: " + hashes)
     res.json({ success: true, hashThusFar: hashes })
 })
 
@@ -110,43 +107,73 @@ app.post("/api/hash", (req, res) => { //Get users fingerprint, return random has
 
     let randomHash: string | null = null
 
-    console.log("Recieved hash: " + hash)
-
     //Check if fingerprint has a hash already
     const row = db.prepare("SELECT allocatedHash FROM user_hashes WHERE fingerprint = ?").get(hash) as { allocatedHash: string } | undefined;
     //^ Right, im fed up with typescript... Type saftey thoooooooo
-    console.log("From database: ", row)
     if (row) {
-        console.log(row?.allocatedHash)
         randomHash = row?.allocatedHash;
     }
 
     if (randomHash === null) {
-        console.log("Assigning new hash")
         const values: string[] = []
         for (const [key, value] of Object.entries(token_parts_encoded)) {
             if(!value) return false
             values.push((value as string[])[0])
         }
 
+        const row = db.prepare("SELECT related_encoded FROM hashes WHERE completedHash = ?").all('false') as { related_encoded: string }[] | undefined
+
+        console.log("Valid ciphers: " + row);
+
         randomHash = values[Math.floor(Math.random() * values.length)]
-        console.log("random hash assigned:", randomHash)
+
+        if (randomHash === null) {
+            console.log("tf happened");
+            res.json({ success: false, hash: randomHash });
+        }
+
+        const row2 = db.prepare("SELECT hash, completedHash FROM hashes WHERE related_encoded = ?").get(randomHash) as { hash: string, completedHash: string } | undefined
+        if (row2?.completedHash === 'true') {
+            res.json({ success: true, hash: randomHash, completed_hash: true });
+            return
+        }
 
         db.prepare("INSERT INTO user_hashes (fingerprint, allocatedHash) VALUES (?,?)").run(hash, randomHash)
 
-    }
-
-    if (randomHash === null) {
-        console.log("tf happened");
-        res.json({ success: false, hash: randomHash });
+    } else {
+        const row2 = db.prepare("SELECT hash, completedHash FROM hashes WHERE related_encoded = ?").get(randomHash) as { hash: string, completedHash: string } | undefined
+        if (row2?.completedHash === 'true') {
+            res.json({ success: true, hash: randomHash, completed_hash: true });
+            return
+        }
     }
 
 	res.json({ success: true, hash: randomHash });
 });
 
 app.post("/api/submitDecrypted", (req, res) => { //Check if their decrpyted hash from main is right
-    const { decrpyt, which } = req.body;
+    const { decrypt, myHash, fingerprint } = req.body;
+
+    const actualHash = db.prepare("SELECT allocatedHash FROM user_hashes WHERE fingerprint = ?").get(fingerprint) as { allocatedHash: string }
+
+    if (actualHash !== myHash) {
+        res.json({ success: false, message: "Invalid hashes" })
+        return
+    }
+
+    const row = db.prepare("SELECT hash, related_encoded FROM hashes WHERE hash = ?").get(decrypt) as { hash: string, related_encoded: string } | undefined;
+    if (!row) { //Checks if the deciphered hash exists therefore real
+        res.json({ success: false });
+        return
+    }
+    if (row.related_encoded !== myHash) {
+        res.json({ success: false, message: "hashes don't match" })
+        return
+    }
+    const stmt = db.prepare("UPDATE hashes SET completedHash = 'true' WHERE hash = ?")
+    stmt.run(decrypt)
     res.json({ success: true });
+
 })
 
 app.post('/api/', (req, res) => { //idk yet
@@ -155,13 +182,3 @@ app.post('/api/', (req, res) => { //idk yet
 })
 
 const server = app.listen(PORT);
-
-const wss = new WebSocketServer({ server });
-
-wss.on("connection", (ws: WebSocket) => {
-	ws.on("message", (message: string) => {
-	});
-	
-	ws.on("close", () => {
-	});
-});

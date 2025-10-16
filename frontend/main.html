@@ -18,6 +18,11 @@
     <br>
     revealed final hash so far: <p id="fullHash">abc123</p>
 	</div>
+  <form action="/api/submitMyHash" id="le-form">
+    <label for="hashArea">Decoded Hash:</label>
+    <input name="hashArea" type="text" class="decoded-input" placeholder="Enter decoded hash">
+    <input type="submit" value="SUBMIT" class="decoded-button">
+  </form>
 </body>
 <script type="module" src="/src/main.ts"></script>
 </html>
