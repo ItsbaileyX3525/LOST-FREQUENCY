@@ -170,6 +170,10 @@ form.addEventListener("submit", async (e) => {
     const data = await response.json();
 
     console.log(data);
+
+    if (data.success === true || data.success === 'true') {
+        window.location.reload()
+    }
 })
 
 document.addEventListener("DOMContentLoaded", async () => {

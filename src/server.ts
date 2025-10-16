@@ -14,10 +14,13 @@ db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently 
 
 //Make database creation simpler
 
-const schemaPath = "./schema_with_data.sql";
-const sql = fs.readFileSync(schemaPath, 'utf8');
-db.exec(sql);
-console.log("Database created!");
+if (false) {
+    const schemaPath = "./schema_with_data.sql";
+    const sql = fs.readFileSync(schemaPath, 'utf8');
+    db.exec(sql);
+    console.log("Database created!");    
+}
+
 
 //console.log(process.env.TEST); //Works
 
@@ -72,11 +75,6 @@ function decryptFernet(token: string, base64Key: string): string {
 
 const key = process.env.FERNET_KEY
 const finalToken = process.env.FERNET_TOKEN;
-const token_parts = JSON.parse(process.env.TOKEN_PARTS || '[]');
-const token_parts_encoded: Record<string, string[]> = JSON.parse(process.env.TOKEN_PARTS_ENCODED || '{}');
-
-//console.log(token_parts)
-//console.log(token_parts_encoded)
 
 app.use(express.static(publicPath));
 
@@ -116,14 +114,16 @@ app.post("/api/hash", (req, res) => { //Get users fingerprint, return random has
 
     if (randomHash === null) {
         const values: string[] = []
-        for (const [key, value] of Object.entries(token_parts_encoded)) {
-            if(!value) return false
-            values.push((value as string[])[0])
-        }
 
         const row = db.prepare("SELECT related_encoded FROM hashes WHERE completedHash = ?").all('false') as { related_encoded: string }[] | undefined
+        if (!row) {
+            res.json({ success: false })
+            return
+        }
 
-        console.log("Valid ciphers: " + row);
+        for (let e of row) {
+            values.push(e.related_encoded)
+        }
 
         randomHash = values[Math.floor(Math.random() * values.length)]
 
@@ -155,23 +155,24 @@ app.post("/api/submitDecrypted", (req, res) => { //Check if their decrpyted hash
     const { decrypt, myHash, fingerprint } = req.body;
 
     const actualHash = db.prepare("SELECT allocatedHash FROM user_hashes WHERE fingerprint = ?").get(fingerprint) as { allocatedHash: string }
-
-    if (actualHash !== myHash) {
+    if (actualHash.allocatedHash !== myHash) {
         res.json({ success: false, message: "Invalid hashes" })
         return
     }
 
-    const row = db.prepare("SELECT hash, related_encoded FROM hashes WHERE hash = ?").get(decrypt) as { hash: string, related_encoded: string } | undefined;
+    //ngl spent like 20 mins on this nomralize thing for chazza to fix in a second
+    const normalizedDecrypt = (decrypt || '').replace(/\s+/g, '').toString();
+    const row = db.prepare("SELECT hash, related_encoded FROM hashes WHERE REPLACE(hash, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE").get(normalizedDecrypt) as { hash: string, related_encoded: string } | undefined;
     if (!row) { //Checks if the deciphered hash exists therefore real
-        res.json({ success: false });
+        res.json({ success: false, message: "hash non_existant" });
         return
     }
     if (row.related_encoded !== myHash) {
         res.json({ success: false, message: "hashes don't match" })
         return
     }
-    const stmt = db.prepare("UPDATE hashes SET completedHash = 'true' WHERE hash = ?")
-    stmt.run(decrypt)
+    const stmt = db.prepare("UPDATE hashes SET completedHash = 'true' WHERE REPLACE(hash, ' ', '') = REPLACE(?, ' ', '') COLLATE NOCASE")
+    stmt.run(normalizedDecrypt)
     res.json({ success: true });
 
 })
