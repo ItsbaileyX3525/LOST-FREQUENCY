@@ -6,6 +6,67 @@ Lost Frequency is a little web-based game that uses your unique identifier to pr
 
 This obviously means that it requires multiple people to complete the final message so let's hope that everyone that plays this can submit their decoded message and figure it out!
 
+## How to beat
+
+Beating this game is very simple, when you load on, just get your hash, read your hint and then decode your cipher into the correct one and submit it to the server.
+
+Once you submit your hash, the website should reload and if it's correct you will see your contribution added to the final hash.
+
+When the entire final hash has been revealed, you need to find the decryption key hidden somewhere on the site (very easy to find) and then use Fernet python decrpytion (or upload to server unsure of which to do rn)
+
+once done, read the message that everyone worked towards!
+
+## Database layout
+
+The database follows a very simple layout, you can look at this lovely diagram typed by chatGPT about how it works:
+
+### user_hashes
+
+| Column        | Type         | Constraints                  |
+|---------------|-------------|-------------------------------|
+| id            | INTEGER     | PRIMARY KEY AUTOINCREMENT    |
+| fingerprint   | TEXT        | NOT NULL, UNIQUE             |
+| allocatedHash | TEXT        | NOT NULL                     |
+| created_at    | DATETIME    | DEFAULT CURRENT_TIMESTAMP    |
+
+**Indexes:**
+
+- `idx_fingerprint` → `fingerprint`  
+- `idx_allocated_hash` → `allocatedHash`  
+
+### hashes
+
+| Column          | Type     | Constraints                  |
+|-----------------|---------|-------------------------------|
+| id              | INTEGER | PRIMARY KEY AUTOINCREMENT    |
+| hash            | TEXT    | NOT NULL, UNIQUE             |
+| completedHash   | TEXT    | NOT NULL                     |
+| related_encoded | TEXT    | NOT NULL                     |
+| shortened       | TEXT    |                               |
+| encryption_type | TEXT    | NOT NULL                     |
+
+### encoded_hashes
+
+| Column       | Type    | Constraints                  |
+|--------------|--------|-------------------------------|
+| id           | INTEGER | PRIMARY KEY AUTOINCREMENT    |
+| part_name    | TEXT    | NOT NULL, UNIQUE             |
+| encoded_value| TEXT    | NOT NULL                     |
+
+**Indexes:**  
+
+- `idx_part_name` → `part_name`  
+
+### Relationships
+
+```text
+user_hashes.allocatedHash ──┐
+                            └──> hashes.hash
+encoded_hashes.part_name ─────> hashes.related_encoded
+```
+
+but yea that's how the database looks visually, you can also check out schema.sql to get a feel for what the database actually is!
+
 ## Other info
 
 Just in case you are curious this server uses:

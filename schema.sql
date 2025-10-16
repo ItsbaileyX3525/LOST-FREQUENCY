@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS encoded_hashes (
     encoded_value TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS completed_game (
+    completed TEXT PRIMARY KEY NOT NULL
+);
 
 -- Index for faster lookups by fingerprint
 CREATE INDEX IF NOT EXISTS idx_fingerprint ON user_hashes(fingerprint);

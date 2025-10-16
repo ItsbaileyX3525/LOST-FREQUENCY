@@ -4,9 +4,11 @@ const hasDecoded = document.getElementById("hasHashDecoded") as HTMLParagraphEle
 const serverHash = document.getElementById("fullHash") as HTMLParagraphElement;
 const hashHintEl = document.getElementById("hint") as HTMLParagraphElement;
 const muteButton = document.getElementById("checkboxInput") as HTMLInputElement;
+const app = document.getElementById("app") as HTMLDivElement;
 const audio = new Audio("/assets/lofi.mp3");
 
 const form = document.getElementById("le-form") as HTMLFormElement;
+const finalForm = document.getElementById("final-form") as HTMLFormElement;
 
 let part: string | undefined = undefined
 let myHash: string | undefined = undefined
@@ -171,17 +173,63 @@ form.addEventListener("submit", async (e) => {
 
     const data = await response.json();
 
-    console.log(data);
-
     if (data.success === true || data.success === 'true') {
         window.location.reload()
     }
+})
+
+finalForm.addEventListener("submit", async (e) => {
+    e.preventDefault()
+
+    let formData = new FormData(finalForm);
+
+    const response = await fetch('http://localhost:3001/api/submitFinal', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            decodedHash: formData.get("hashArea")
+        })
+    })
+
+    form.reset()
+
+    if (!response.ok) {
+        console.log("Error submitting final hash");
+        return
+    }
+
+    const data = await response.json()
+
+    console.log(data)
 })
 
 document.addEventListener("DOMContentLoaded", async () => {
     fingerprint = await requestFingerprint(true)
     if (!fingerprint || !hasDecoded || !hashDecode || !serverHash) return;
     const hashThusFar = await checkHashThusFar()
+    if (hashThusFar.message === 'Game already complete') {
+        const removeAllChildren = (element: HTMLElement): void => {
+            const children = Array.from(element.children) as HTMLElement[];
+
+            for (const child of children) {
+                removeAllChildren(child);
+                child.remove();
+            }
+        };
+
+        removeAllChildren(app as HTMLElement);
+
+        const div = document.createElement("div");
+        div.classList.add("flex","justify-center")
+        const p = document.createElement("p");
+        p.innerText = "Sorry but the game has concluded"
+        div.appendChild(p)
+        app.appendChild(div)
+        return;
+    }
+
     let haveIDecoed = false;
     const uploadResult = await uploadFingerprint(fingerprint)
     if (!uploadResult || hashThusFar === undefined) return
@@ -193,6 +241,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     hashHintEl.innerText = myHashSplit.slice(2, myHashSplit.length).join(" ")
     serverHash.innerText = hashThusFar.hashThusFar.toString().replaceAll(",", "")
     hasDecoded.innerText = haveIDecoed ? "yes" : "no";
+
+    if (!serverHash.innerText.includes("*")) {
+        finalForm.style.display = "block"
+    }
 })
 
 muteButton.addEventListener("click", (e) => {

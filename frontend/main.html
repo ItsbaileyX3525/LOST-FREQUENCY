@@ -9,19 +9,27 @@
 </head>
 <body class="">
 	<div id="app">
-		Welcome to the homepage! Your unique fingerprint is 
-    <p id="fingerprint">fingerprint</p>
+		<p>Welcome to the homepage! Your unique fingerprint is: <p id="fingerprint">fingerprint</p></p>
     <br>
-    Your hash to decode is: <p id="hash">hash</p>
+    <p>Your hash to decode is: <p id="hash">hash</p></p>
     <br>
-    Your hint for your hash: <p id="hint">hint</p>
+    <p>Your hint for your hash: <p id="hint">hint</p></p>
     <br>
-    Have you decoded your hash: <p id="hasHashDecoded">no</p>
+    <p>Have you decoded your hash: <p id="hasHashDecoded">no</p></p>
     <br>
-    revealed final hash so far: <p id="fullHash">abc123</p>
+    <p>revealed final hash so far: <p id="fullHash">abc123</p></p>
+    <br>
   <form action="/api/submitMyHash" id="le-form">
     <label for="hashArea">Decoded Hash:</label>
     <input name="hashArea" type="text" class="decoded-input" placeholder="Enter decoded hash">
+    <input type="submit" value="SUBMIT" class="decoded-button">
+  </form>
+  <br>
+  <form style="display: none" action="/api/submitFinal" id="final-form">
+    <p>SERVER HASH REVEALED!!!</p>
+    <br>
+    <label for="hashArea">Decoded Final Hash:</label>
+    <input name="hashArea" type="text" class="decoded-input" placeholder="Enter final decoded hash">
     <input type="submit" value="SUBMIT" class="decoded-button">
   </form>
   <br>
