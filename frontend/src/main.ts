@@ -4,6 +4,8 @@ const hasDecoded = document.getElementById("hasHashDecoded") as HTMLParagraphEle
 const serverHash = document.getElementById("fullHash") as HTMLParagraphElement;
 const hashHintEl = document.getElementById("hint") as HTMLParagraphElement;
 const muteButton = document.getElementById("checkboxInput") as HTMLInputElement;
+const submitMessage = document.getElementById("submitMessage") as HTMLSpanElement;
+const submitMessageFinal = document.getElementById("submitMessageFinal") as HTMLSpanElement;
 const app = document.getElementById("app") as HTMLDivElement;
 const audio = new Audio("/assets/lofi.mp3");
 
@@ -89,8 +91,6 @@ async function buildFingerprintString() {
         "canvas:" + canvasPart,
         "webgl_renderer:" + webgl.renderer,
         "maxTexture:" + webgl.maxTextureSize,
-        "userAgent:" + navigator.userAgent.replace(/\s+/g, " "), //Might remove
-        "timezone:" + Intl.DateTimeFormat().resolvedOptions().timeZone
     ];
     return parts.join("|")
 }
@@ -119,6 +119,20 @@ async function checkHashThusFar() {
     const data = await response.json();
 
     return data
+}
+
+function messageReturn(message: string, type: string = "success") {
+    if (submitMessage) {
+        submitMessage.textContent = message;
+        submitMessage.className = type;
+    }
+}
+
+function messageReturnFinal(message: string, type: string = "success") {
+    if (submitMessageFinal) {
+        submitMessageFinal.textContent = message;
+        submitMessageFinal.className = type;
+    }
 }
 
 async function uploadFingerprint(hash: string) {
@@ -168,13 +182,19 @@ form.addEventListener("submit", async (e) => {
 
     if (!response.ok) {
         console.log("error with form submit");
+        messageReturn("Error submitting hash :(", "error")
         return;
     }
 
     const data = await response.json();
 
     if (data.success === true || data.success === 'true') {
-        window.location.reload()
+        messageReturn("CORRECT HASH! CONGRATS!")
+        setTimeout(() => {
+            window.location.reload() 
+        }, 1500);
+    } else {
+        messageReturn(data.message, "error")
     }
 })
 
@@ -182,6 +202,11 @@ finalForm.addEventListener("submit", async (e) => {
     e.preventDefault()
 
     let formData = new FormData(finalForm);
+    let decodedHash = String(formData.get("hashArea"))
+    if (!decodedHash || typeof(decodedHash) !== "string") {
+        messageReturnFinal("Invalid hash contents, re-enter your hash", "error");
+        return false
+    }
 
     const response = await fetch('http://localhost:3001/api/submitFinal', {
         method: "POST",
@@ -189,7 +214,7 @@ finalForm.addEventListener("submit", async (e) => {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            decodedHash: formData.get("hashArea")
+            decodedHash: decodedHash
         })
     })
 
@@ -202,7 +227,15 @@ finalForm.addEventListener("submit", async (e) => {
 
     const data = await response.json()
 
-    console.log(data)
+    if (data.success === true || data.success === 'true') {
+        messageReturnFinal(data.message);
+        if (navigator?.clipboard?.writeText) {
+            return navigator.clipboard.writeText(decodedHash)
+        }
+        setTimeout(() => {
+            window.location.reload()
+        }, 5000);
+    }
 })
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -234,11 +267,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const uploadResult = await uploadFingerprint(fingerprint)
     if (!uploadResult || hashThusFar === undefined) return
     myHash = uploadResult[0]
-    const myHashSplit: string[] = myHash?.split(" ") || []
+    const myHashSplit: string[] = myHash?.split("|") || []
     haveIDecoed = uploadResult[1]
     fingerprintText.innerText = fingerprint;
     hashDecode.innerText = myHashSplit[0] || "";
-    hashHintEl.innerText = myHashSplit.slice(2, myHashSplit.length).join(" ")
+    hashHintEl.innerText = myHashSplit[1]
     serverHash.innerText = hashThusFar.hashThusFar.toString().replaceAll(",", "")
     hasDecoded.innerText = haveIDecoed ? "yes" : "no";
 

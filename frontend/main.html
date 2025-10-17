@@ -17,12 +17,15 @@
     <br>
     <p>Have you decoded your hash: <p id="hasHashDecoded">no</p></p>
     <br>
+    <p>A quick tip: <p>If you figure out the cipher, don't use AI, it will give you the wrong decoded text all the time.</p></p>
+    <br>
     <p>revealed final hash so far: <p id="fullHash">abc123</p></p>
     <br>
   <form action="/api/submitMyHash" id="le-form">
     <label for="hashArea">Decoded Hash:</label>
     <input name="hashArea" type="text" class="decoded-input" placeholder="Enter decoded hash">
     <input type="submit" value="SUBMIT" class="decoded-button">
+    <span id="submitMessage"></span>
   </form>
   <br>
   <form style="display: none" action="/api/submitFinal" id="final-form">
@@ -31,6 +34,7 @@
     <label for="hashArea">Decoded Final Hash:</label>
     <input name="hashArea" type="text" class="decoded-input" placeholder="Enter final decoded hash">
     <input type="submit" value="SUBMIT" class="decoded-button">
+    <span id="submitMessageFinal"></span>
   </form>
   <br>
   <div class="flex justify-center">

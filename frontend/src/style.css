@@ -129,3 +129,11 @@ p {
 #checkboxInput:hover + .toggleSwitch {
   background-color: rgb(61, 61, 61);
 }
+
+.success {
+    color: lime;
+}
+
+.error {
+    color: red;
+}

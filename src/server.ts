@@ -14,12 +14,14 @@ db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently 
 
 //Make database creation simpler
 
-if (true) {
-    const schemaPath = "./schema_with_data.sql";
-    const sql = fs.readFileSync(schemaPath, 'utf8');
-    db.exec(sql);
-    console.log("Database created!");    
-}
+//If database already exists then because of the 
+//If rules on the schema nothing happens so no need
+//to comment out
+const schemaPath = "./schema_with_data.sql";
+const sql = fs.readFileSync(schemaPath, 'utf8');
+db.exec(sql);
+console.log("Database created!");    
+
 
 
 //console.log(process.env.TEST); //Works
@@ -83,7 +85,7 @@ app.post("/api/hash", (req, res) => { //Get users fingerprint, return random has
 
         const row = db.prepare("SELECT related_encoded FROM hashes WHERE completedHash = ?").all('false') as { related_encoded: string }[] | undefined
         if (!row) {
-            res.json({ success: false })
+            res.json({ success: false, message: "Game completed already... I think" })
             return
         }
 
@@ -95,7 +97,7 @@ app.post("/api/hash", (req, res) => { //Get users fingerprint, return random has
 
         if (randomHash === null) {
             console.log("tf happened");
-            res.json({ success: false, hash: randomHash });
+            res.json({ success: false, message: "Something weird happened", hash: randomHash });
         }
 
         const row2 = db.prepare("SELECT hash, completedHash FROM hashes WHERE related_encoded = ?").get(randomHash) as { hash: string, completedHash: string } | undefined
@@ -146,14 +148,14 @@ app.post("/api/submitDecrypted", (req, res) => { //Check if their decrpyted hash
     `).get(normalizedDecrypt, normalizedDecrypt, normalizedDecrypt) as { hash: string, related_encoded: string } | undefined;
     
     if (!row) { //Checks if the deciphered hash exists therefore real
-        res.json({ success: false, message: "hash non_existant" });
+        res.json({ success: false, message: "Incorrect hash, try again!" });
         return
     }
     
-    //if (row.related_encoded !== myHash) {
-        //res.json({ success: false, message: "hashes don't match" })
-        //return
-    //}
+    if (row.related_encoded !== myHash) {
+        res.json({ success: false, message: "Incorrect hash, try again!" })
+        return
+    }
     const stmt = db.prepare(`
         UPDATE hashes
         SET completedHash = 'true'
