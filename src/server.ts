@@ -13,15 +13,12 @@ const db = new Database('thine_database.db');
 db.pragma('journal_mode = WAL'); //I have no idea what this does but apparently makes performance better?
 
 //Make database creation simpler
-
-//If database already exists then because of the 
-//If rules on the schema nothing happens so no need
-//to comment out
-const schemaPath = "./schema_with_data.sql";
-const sql = fs.readFileSync(schemaPath, 'utf8');
-db.exec(sql);
-console.log("Database created!");    
-
+if (true) {
+    const schemaPath = "./schema_with_data.sql";
+    const sql = fs.readFileSync(schemaPath, 'utf8');
+    db.exec(sql);
+    console.log("Database created!");    
+}
 
 
 //console.log(process.env.TEST); //Works
@@ -39,6 +36,17 @@ const publicPath = path.join(__dirname, "../public");
 // (comments urghh)
 
 app.use(express.static(publicPath));
+
+// Middleware to serve HTML files without .html extension
+app.use((req, res, next) => {
+    if (!req.path.includes('.') && req.path !== '/') {
+        const htmlPath = path.join(publicPath, req.path + '.html');
+        if (fs.existsSync(htmlPath)) {
+            return res.sendFile(htmlPath);
+        }
+    }
+    next();
+});
 
 app.post("/api/checkDecoded", (_req, res) => { //Cudda just made it get but oh well
     const gameCheck = db.prepare("SELECT completed FROM completed_game").get() as { completed: string }
