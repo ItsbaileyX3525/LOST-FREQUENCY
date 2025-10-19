@@ -107,7 +107,7 @@ async function requestFingerprint(consent: boolean) {
 }
 
 async function checkHashThusFar() {
-    const response = await fetch('http://localhost:3001/api/checkDecoded', {
+    const response = await fetch('/api/checkDecoded', {
         method: "POST"
     });
 
@@ -138,7 +138,7 @@ function messageReturnFinal(message: string, type: string = "success") {
 async function uploadFingerprint(hash: string) {
     let returnHash = undefined;
     let completed_hash = undefined
-    const response = await fetch('http://localhost:3001/api/hash', {
+    const response = await fetch('/api/hash', {
         method: "POST",
         headers: {
             "Content-Type" : "application/json",
@@ -166,7 +166,7 @@ form.addEventListener("submit", async (e) => {
 
     let formData = new FormData(form);
 
-    const response = await fetch('http://localhost:3001/api/submitDecrypted', {
+    const response = await fetch('/api/submitDecrypted', {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -208,7 +208,7 @@ finalForm.addEventListener("submit", async (e) => {
         return false
     }
 
-    const response = await fetch('http://localhost:3001/api/submitFinal', {
+    const response = await fetch('/api/submitFinal', {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
