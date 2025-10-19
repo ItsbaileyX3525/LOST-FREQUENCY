@@ -1,4 +1,5 @@
 import express from "express";
+import https from 'https';
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -195,4 +196,22 @@ app.post('/api/submitFinal', (req, res) => { //end game thing
     res.json({ success: true, message: "Congrats on beating the game!" });
 })
 
-const server = app.listen(PORT);
+// Start server: prefer HTTPS if certs are available, otherwise HTTP
+const certPath = path.join(__dirname, "../certs/cert.pem");
+const keyPath = path.join(__dirname, "../certs/key.pem");
+
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+    try {
+        const cert = fs.readFileSync(certPath);
+        const key = fs.readFileSync(keyPath);
+        const httpsServer = https.createServer({ key, cert }, app);
+        httpsServer.listen(PORT, () => {
+            console.log(`HTTPS server listening on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Failed to start HTTPS server, falling back to HTTP:', err);
+        const server = app.listen(PORT, () => console.log(`HTTP server listening on port ${PORT}`));
+    }
+} else {
+    const server = app.listen(PORT, () => console.log(`HTTP server listening on port ${PORT}`));
+}
